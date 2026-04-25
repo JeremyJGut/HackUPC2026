@@ -45,6 +45,7 @@ type SpeechRecognitionEventLike = {
 
 const suggestionPhrases = [
   "Guarda lo que he hecho ahora",
+  "Crea una rama paralela para experimentar",
   "Súbelo a internet",
   "Quiero volver a lo de ayer",
 ];

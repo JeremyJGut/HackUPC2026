@@ -1,6 +1,13 @@
-export type TimelinePointType = "commit" | "push" | "restore";
+export type TimelinePointType = "commit" | "push" | "restore" | "branch";
 
-export type GitActionType = "commit" | "push" | "restore";
+export type GitActionType = "commit" | "push" | "restore" | "branch";
+
+export type BranchTrack = {
+  name: string;
+  color: string;
+  headId: string;
+  baseId?: string;
+};
 
 export type SavePoint = {
   id: string;
@@ -9,16 +16,20 @@ export type SavePoint = {
   timestamp: string;
   type: TimelinePointType;
   branch: string;
+  parentId?: string;
+  targetId?: string;
 };
 
 export type RepositoryState = {
   branchName: string;
   commits: SavePoint[];
+  branches: BranchTrack[];
   workingChanges: string[];
   stagedChanges: number;
   pushedPointId?: string;
   remoteStatus: string;
   lastAction: GitActionType | "idle";
+  headId: string;
 };
 
 export type GitAction = {

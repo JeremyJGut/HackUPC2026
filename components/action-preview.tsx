@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, CloudUpload, GitCommitHorizontal, RotateCcw } from "lucide-react";
+import { ArrowRight, CloudUpload, GitBranch, GitCommitHorizontal, RotateCcw } from "lucide-react";
 
 import type { GitAction, RepositoryState } from "@/lib/types";
 
@@ -9,6 +9,7 @@ const iconByType = {
   commit: GitCommitHorizontal,
   push: CloudUpload,
   restore: RotateCcw,
+  branch: GitBranch,
 } as const;
 
 type ActionPreviewProps = {
@@ -18,22 +19,26 @@ type ActionPreviewProps = {
 };
 
 function buildBeforeLines(state: RepositoryState) {
-  const lastPoint = state.commits[state.commits.length - 1];
+  const lastPoint =
+    state.commits.find((point) => point.id === state.headId) ?? state.commits[state.commits.length - 1];
   return [
     `Rama activa: ${state.branchName}`,
     `Último punto visible: ${lastPoint?.label ?? "Sin historial"}`,
+    `${state.branches.length} ramas visibles en el grafo`,
     `${state.stagedChanges} cambios listos para guardar`,
     state.remoteStatus,
   ];
 }
 
 function buildAfterLines(state: RepositoryState, action?: GitAction | null) {
-  const lastPoint = state.commits[state.commits.length - 1];
+  const lastPoint =
+    state.commits.find((point) => point.id === state.headId) ?? state.commits[state.commits.length - 1];
   const commandLine = action ? action.gitTranslation.join("  +  ") : "Esperando una instrucción";
 
   return [
     `Se aplicará: ${action?.label ?? "Sin acción seleccionada"}`,
     `Resultado esperado: ${lastPoint?.label ?? "Sin cambios"}`,
+    `Ramas después del cambio: ${state.branches.length}`,
     state.remoteStatus,
     `Traducción técnica: ${commandLine}`,
   ];

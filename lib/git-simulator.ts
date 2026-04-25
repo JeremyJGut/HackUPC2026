@@ -1,4 +1,4 @@
-import type { ChatMessage, GitAction, RepositoryState, SavePoint } from "./types";
+import type { BranchTrack, ChatMessage, GitAction, RepositoryState, SavePoint } from "./types";
 
 const examplesByAction = {
   commit: [
@@ -32,14 +32,17 @@ function createPoint(
   type: SavePoint["type"],
   branch = "main",
   timestamp = new Date().toISOString(),
+  parentId?: string,
+  targetId?: string,
 ): SavePoint {
-  return { id, label, description, timestamp, type, branch };
+  return { id, label, description, timestamp, type, branch, parentId, targetId };
 }
 
 function cloneRepository(repository: RepositoryState): RepositoryState {
   return {
     ...repository,
     commits: repository.commits.map((point) => ({ ...point })),
+    branches: repository.branches.map((branch) => ({ ...branch })),
     workingChanges: [...repository.workingChanges],
   };
 }
@@ -54,21 +57,66 @@ function nextPointId(count: number) {
   return `point-${alphabet[count] ?? count + 1}`;
 }
 
+const branchPalette = [
+  "#34d399",
+  "#60a5fa",
+  "#f59e0b",
+  "#f472b6",
+  "#a78bfa",
+  "#22d3ee",
+];
+
+function buildBranch(name: string, headId: string, index: number, baseId?: string): BranchTrack {
+  return {
+    name,
+    headId,
+    baseId,
+    color: branchPalette[index % branchPalette.length],
+  };
+}
+
+function updateBranchHead(repository: RepositoryState, branchName: string, headId: string) {
+  repository.branches = repository.branches.map((branch) =>
+    branch.name === branchName ? { ...branch, headId } : branch,
+  );
+}
+
+function getCurrentHead(repository: RepositoryState) {
+  return repository.commits.find((point) => point.id === repository.headId) ?? repository.commits.at(-1);
+}
+
 export function createInitialRepository(): RepositoryState {
+  const pointA = createPoint(
+    "point-a",
+    "Punto A",
+    "Base estable del proyecto",
+    "commit",
+    "main",
+    isoMinutesAgo(180),
+  );
+  const pointB = createPoint(
+    "point-b",
+    "Punto B",
+    "Nueva pantalla de bienvenida",
+    "commit",
+    "main",
+    isoMinutesAgo(95),
+    "point-a",
+  );
+  const pointC = createPoint(
+    "point-c",
+    "Punto C",
+    "Textos refinados para presentar la demo",
+    "commit",
+    "main",
+    isoMinutesAgo(25),
+    "point-b",
+  );
+
   return {
     branchName: "main",
-    commits: [
-      createPoint("point-a", "Punto A", "Base estable del proyecto", "commit", "main", isoMinutesAgo(180)),
-      createPoint("point-b", "Punto B", "Nueva pantalla de bienvenida", "commit", "main", isoMinutesAgo(95)),
-      createPoint(
-        "point-c",
-        "Punto C",
-        "Textos refinados para presentar la demo",
-        "commit",
-        "main",
-        isoMinutesAgo(25),
-      ),
-    ],
+    commits: [pointA, pointB, pointC],
+    branches: [buildBranch("main", "point-c", 0)],
     workingChanges: [
       "Nuevo copy para el chat guiado",
       "Ajustes visuales en el panel central",
@@ -78,6 +126,7 @@ export function createInitialRepository(): RepositoryState {
     pushedPointId: "point-b",
     remoteStatus: "Tienes cambios recientes pendientes de subir",
     lastAction: "idle",
+    headId: "point-c",
   };
 }
 
@@ -115,6 +164,32 @@ export function getActionFromInput(input: string, repository: RepositoryState): 
       gitTranslation: ['git add .', 'git commit -m "Guardar progreso visual"'],
       accent: "from-emerald-400/80 to-teal-300/80",
       previewChanges: [...examplesByAction.commit],
+    };
+  }
+
+  if (
+    containsAny(normalized, [
+      "rama",
+      "branch",
+      "multiverso",
+      "camino alternativo",
+      "version paralela",
+      "separa esto",
+    ])
+  ) {
+    const nextBranchName = repository.branches.length === 1 ? "idea-ui" : `idea-${repository.branches.length}`;
+    return {
+      type: "branch",
+      label: "Crear un multiverso nuevo",
+      naturalExplanation:
+        "Voy a abrir una rama paralela para que explores otra versión sin tocar la historia principal.",
+      gitTranslation: [`git checkout -b ${nextBranchName}`],
+      accent: "from-fuchsia-400/80 to-violet-300/80",
+      previewChanges: [
+        "Se crea un carril nuevo en el grafo",
+        "La historia principal queda intacta",
+        "Podrás experimentar en paralelo con seguridad",
+      ],
     };
   }
 
@@ -176,6 +251,7 @@ export function getActionFromInput(input: string, repository: RepositoryState): 
 
 export function simulateAction(repository: RepositoryState, action: GitAction) {
   const nextState = cloneRepository(repository);
+  const currentHead = getCurrentHead(nextState);
 
   if (action.type === "commit") {
     const nextIndex = nextState.commits.length;
@@ -185,9 +261,13 @@ export function simulateAction(repository: RepositoryState, action: GitAction) {
       "Guardado generado a partir de lenguaje natural",
       "commit",
       nextState.branchName,
+      new Date().toISOString(),
+      currentHead?.id,
     );
 
     nextState.commits.push(newPoint);
+    nextState.headId = newPoint.id;
+    updateBranchHead(nextState, nextState.branchName, newPoint.id);
     nextState.stagedChanges = 0;
     nextState.workingChanges = [];
     nextState.remoteStatus = `${newPoint.label} creado localmente y pendiente de subir`;
@@ -201,13 +281,16 @@ export function simulateAction(repository: RepositoryState, action: GitAction) {
   }
 
   if (action.type === "push") {
-    const lastPoint = nextState.commits[nextState.commits.length - 1];
+    const lastPoint = getCurrentHead(nextState) ?? nextState.commits[nextState.commits.length - 1];
     const pushedPoint = createPoint(
       `${lastPoint.id}-cloud`,
       `${lastPoint.label} sincronizado`,
       "Copia compartida en la nube",
       "push",
       nextState.branchName,
+      new Date().toISOString(),
+      lastPoint.id,
+      lastPoint.id,
     );
 
     nextState.commits.push(pushedPoint);
@@ -222,10 +305,45 @@ export function simulateAction(repository: RepositoryState, action: GitAction) {
     };
   }
 
+  if (action.type === "branch") {
+    const sourceHead = getCurrentHead(nextState) ?? nextState.commits[nextState.commits.length - 1];
+    const branchName = action.gitTranslation[0]?.split(" ").at(-1) ?? `idea-${nextState.branches.length}`;
+    const branchPoint = createPoint(
+      `${sourceHead.id}-branch-${nextState.branches.length}`,
+      `Rama ${branchName}`,
+      `Nuevo multiverso abierto desde ${sourceHead.label}`,
+      "branch",
+      branchName,
+      new Date().toISOString(),
+      sourceHead.id,
+      sourceHead.id,
+    );
+
+    nextState.commits.push(branchPoint);
+    nextState.branches.push(
+      buildBranch(branchName, branchPoint.id, nextState.branches.length, sourceHead.id),
+    );
+    nextState.branchName = branchName;
+    nextState.headId = branchPoint.id;
+    nextState.remoteStatus = `Se abrió la rama ${branchName} como línea paralela`;
+    nextState.lastAction = "branch";
+    nextState.stagedChanges = 2;
+    nextState.workingChanges = [
+      `Exploración visual iniciada en ${branchName}`,
+      "Cambios experimentales listos para probar",
+    ];
+
+    return {
+      nextState,
+      summary: `Se abrirá ${branchName} como una historia paralela conectada a ${sourceHead.label}.`,
+      backupLabel: sourceHead.label,
+    };
+  }
+
   const previousCommit =
     [...nextState.commits]
       .reverse()
-      .find((point) => point.type === "commit" && point.id !== nextState.commits[nextState.commits.length - 1]?.id) ??
+      .find((point) => point.type === "commit" && point.id !== currentHead?.id) ??
     nextState.commits[0];
 
   const restorePoint = createPoint(
@@ -234,9 +352,14 @@ export function simulateAction(repository: RepositoryState, action: GitAction) {
     "Recuperación visual de una versión anterior",
     "restore",
     nextState.branchName,
+    new Date().toISOString(),
+    currentHead?.id,
+    previousCommit.id,
   );
 
   nextState.commits.push(restorePoint);
+  nextState.headId = restorePoint.id;
+  updateBranchHead(nextState, nextState.branchName, restorePoint.id);
   nextState.workingChanges = [`Interfaz recuperada desde ${previousCommit.label}`];
   nextState.stagedChanges = 1;
   nextState.remoteStatus = `Vista preparada para regresar a ${previousCommit.label}`;
