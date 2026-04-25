@@ -51,15 +51,6 @@ type SpeechRecognitionEventLike = {
   }>;
 };
 
-const suggestionPhrases = [
-  "Guarda lo que he hecho ahora",
-  "Haz merge de la rama actual",
-  "Haz rebase sobre main",
-  "Crea una rama paralela para experimentar",
-  "Súbelo a internet",
-  "Quiero volver a lo de ayer",
-];
-
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     headers: {
@@ -501,7 +492,6 @@ export default function Home() {
               onInputChange={setInput}
               onSubmit={() => handleSubmit(input)}
               onMicClick={handleMicClick}
-              suggestions={suggestionPhrases}
             />
           </motion.aside>
         </section>
