@@ -49,7 +49,7 @@ export function ActionPreview({ before, after, action }: ActionPreviewProps) {
   const description = action ? action.naturalExplanation : null;
 
   return (
-    <section className="flex min-h-[320px] flex-col justify-between rounded-[28px] border border-white/10 bg-slate-950/35 p-6">
+    <section className="flex h-full min-h-[320px] flex-col justify-between rounded-[28px] border border-white/10 bg-slate-950/35 p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-white/45">Previsualizacion de accion</p>

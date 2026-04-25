@@ -200,8 +200,8 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.14),transparent_35%),linear-gradient(180deg,#07111f,#020617)] px-6 py-8 text-slate-100 md:px-10 xl:h-screen xl:overflow-hidden">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 xl:h-full">
+    <main className="min-h-[100dvh] bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.14),transparent_35%),linear-gradient(180deg,#07111f,#020617)] px-4 py-6 text-slate-100 sm:px-6 lg:h-[100dvh] lg:overflow-hidden xl:px-8">
+      <div className="mx-auto flex h-full w-full max-w-[1720px] flex-col gap-6">
         <motion.header
           className="flex flex-col gap-5 rounded-[32px] border border-white/10 bg-white/6 p-6 shadow-2xl shadow-slate-950/30 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between"
           initial={{ opacity: 0, y: 16 }}
@@ -239,53 +239,48 @@ export default function Home() {
           </div>
         </motion.header>
 
-        <section className="grid gap-6 xl:min-h-0 xl:flex-1 xl:grid-cols-[320px_minmax(0,1fr)_380px]">
-          <motion.aside
-            className="rounded-[32px] border border-white/10 bg-white/6 p-5 shadow-xl shadow-slate-950/20 backdrop-blur-xl xl:min-h-0 xl:overflow-hidden"
-            initial={{ opacity: 0, x: -18 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.05 }}
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Mapa de historia</p>
-                <h2 className="mt-1 text-lg font-medium text-white">Linea de guardados</h2>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-2">
-                <GitBranch className="h-5 w-5 text-indigo-200" />
-              </div>
-            </div>
-            <GitTreeVisualizer repository={repository} pending={pendingAction?.after} />
-          </motion.aside>
+        <section
+          className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_clamp(320px,28vw,400px)]"
+        >
+          <div className="flex min-h-0 flex-col gap-6">
+            <motion.section
+              className="min-h-0 lg:flex-[1.15]"
+              initial={{ opacity: 0, x: -18 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.05 }}
+            >
+              <GitTreeVisualizer repository={repository} pending={pendingAction?.after} />
+            </motion.section>
 
-          <motion.section
-            className="rounded-[32px] border border-white/10 bg-white/6 p-5 shadow-xl shadow-slate-950/20 backdrop-blur-xl xl:min-h-0 xl:overflow-auto"
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Previsualizacion de accion</p>
-                <h2 className="mt-1 text-lg font-medium text-white">Antes y despues del siguiente paso</h2>
+            <motion.section
+              className="min-h-0 lg:flex-1"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Previsualizacion de accion</p>
+                  <h2 className="mt-1 text-lg font-medium text-white">Antes y despues del siguiente paso</h2>
+                </div>
+                {pendingAction && (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-400/10 px-3 py-1 text-xs font-medium text-indigo-100">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                    Propuesta lista para confirmar
+                  </span>
+                )}
               </div>
-              {pendingAction && (
-                <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-400/10 px-3 py-1 text-xs font-medium text-indigo-100">
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                  Propuesta lista para confirmar
-                </span>
-              )}
-            </div>
 
-            <ActionPreview
-              before={repository}
-              after={pendingAction?.after ?? repository}
-              action={pendingAction?.action ?? null}
-            />
-          </motion.section>
+              <ActionPreview
+                before={repository}
+                after={pendingAction?.after ?? repository}
+                action={pendingAction?.action ?? null}
+              />
+            </motion.section>
+          </div>
 
           <motion.aside
-            className="rounded-[32px] border border-white/10 bg-white/6 p-5 shadow-xl shadow-slate-950/20 backdrop-blur-xl xl:min-h-0 xl:overflow-hidden"
+            className="min-h-[640px] rounded-[32px] border border-white/10 bg-white/6 p-5 shadow-xl shadow-slate-950/20 backdrop-blur-xl lg:min-h-0 lg:h-full lg:overflow-hidden"
             initial={{ opacity: 0, x: 18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.15 }}

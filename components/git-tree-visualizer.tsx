@@ -153,9 +153,6 @@ export function GitTreeVisualizer({
         <div>
           <p className="text-xs uppercase tracking-[0.28em] text-white/35">{title}</p>
           <h2 className="mt-2 text-xl font-semibold text-white">Grafo de historia multiverso</h2>
-          <p className="mt-1 text-sm text-white/55">
-            Cada rama conserva su color y sus conexiones reales para que el proyecto se lea como un mapa.
-          </p>
         </div>
 
         <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/60">

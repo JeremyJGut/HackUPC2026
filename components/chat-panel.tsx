@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Mic, Send, Sparkles, Volume2 } from "lucide-react";
+import { Mic, Send, Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { ChatMessage } from "@/lib/types";
 
@@ -131,18 +131,6 @@ export function ChatPanel({
           >
             <Send className="h-5 w-5" />
           </button>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 text-sm text-slate-300">
-          <div className="flex items-center gap-2 text-cyan-200">
-            <Sparkles className="h-4 w-4" />
-            Traducción amigable
-          </div>
-          <p className="mt-2 leading-6 text-slate-400">
-            GitEase convierte frases como &quot;Súbelo a internet&quot; en acciones
-            visuales tipo <span className="text-slate-200">git push</span>, siempre
-            proponiendo antes una copia de seguridad.
-          </p>
         </div>
       </div>
     </section>
