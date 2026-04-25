@@ -337,3 +337,35 @@ export function checkoutReference(reference: string) {
 
   return successfulOperation(`HEAD movido a ${reference}.`);
 }
+
+export function mergeBranch(sourceBranch: string) {
+  assertRepository();
+
+  const safeBranch = sourceBranch.trim();
+  if (!safeBranch) {
+    throw new Error("Debes indicar una rama para hacer merge.");
+  }
+
+  const result = runGit(["merge", safeBranch]);
+  if (!result.ok) {
+    throw new Error(result.stderr || `No pude fusionar la rama ${safeBranch}.`);
+  }
+
+  return successfulOperation(`He fusionado ${safeBranch} en la rama actual.`);
+}
+
+export function rebaseOnto(sourceBranch: string) {
+  assertRepository();
+
+  const safeBranch = sourceBranch.trim();
+  if (!safeBranch) {
+    throw new Error("Debes indicar una rama base para hacer rebase.");
+  }
+
+  const result = runGit(["rebase", safeBranch]);
+  if (!result.ok) {
+    throw new Error(result.stderr || `No pude rebasar sobre ${safeBranch}.`);
+  }
+
+  return successfulOperation(`He rehecho la historia actual sobre ${safeBranch}.`);
+}

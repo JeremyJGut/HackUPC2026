@@ -7,11 +7,13 @@ import {
   ArrowUpToLine,
   Cloud,
   GitBranch,
+  GitMerge,
   Minus,
   Move,
   Plus,
   ShieldCheck,
   Sparkles,
+  Workflow,
 } from "lucide-react";
 
 import type { RepositoryState, SavePoint, TimelinePointType } from "@/lib/types";
@@ -39,6 +41,8 @@ const iconMap = {
   push: Cloud,
   restore: ArrowUpToLine,
   branch: GitBranch,
+  merge: GitMerge,
+  rebase: Workflow,
 } satisfies Record<TimelinePointType, typeof ShieldCheck>;
 
 const typeLabelMap: Record<TimelinePointType, string> = {
@@ -46,6 +50,8 @@ const typeLabelMap: Record<TimelinePointType, string> = {
   push: "Nube",
   restore: "Salto",
   branch: "Rama",
+  merge: "Merge",
+  rebase: "Rebase",
 };
 
 function formatTime(timestamp: string) {

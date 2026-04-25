@@ -23,6 +23,16 @@ const examplesByAction = {
     "Mantienes una referencia clara del cambio",
     "La interfaz te muestra el salto temporal antes de aplicarlo",
   ],
+  merge: [
+    "Se combinan dos historias en una sola línea",
+    "La rama principal absorbe los cambios de otra rama",
+    "El historial mostrará un punto de unión entre ambas líneas",
+  ],
+  rebase: [
+    "Se reordena tu trabajo sobre una base más reciente",
+    "Tu rama reaparece como si hubiera nacido después",
+    "La historia queda más lineal y limpia visualmente",
+  ],
 } as const;
 
 const containsAny = (text: string, candidates: string[]) =>
@@ -277,7 +287,7 @@ export function repositoryFromBackend(data: {
   };
 }
 
-export function getActionFromInput(input: string, repository: RepositoryState): GitAction {
+export function getActionFromInput(input: string, repository: RepositoryState): GitAction | null {
   const normalized = input.trim().toLowerCase();
 
   if (
@@ -372,15 +382,56 @@ export function getActionFromInput(input: string, repository: RepositoryState): 
     };
   }
 
-  return {
-    type: "commit",
-    label: "Guardar con ayuda guiada",
-    naturalExplanation:
-      "No identifiqué una intención exacta, así que propongo un guardado seguro como siguiente paso más útil para no perder trabajo.",
-    gitTranslation: ['git add .', 'git commit -m "Guardado sugerido por GitEase"'],
-    accent: "from-violet-400/80 to-indigo-300/80",
-    previewChanges: [...examplesByAction.commit],
-  };
+  if (
+    containsAny(normalized, [
+      "merge",
+      "fusiona",
+      "fusionar",
+      "unir ramas",
+      "mezcla ramas",
+      "combina ramas",
+    ])
+  ) {
+    const candidateBranch =
+      repository.branches.find((branch) => branch.name !== repository.branchName)?.name ?? "rama-secundaria";
+    return {
+      type: "merge",
+      label: "Fusionar ramas",
+      naturalExplanation:
+        "Voy a unir otra rama con tu línea principal para juntar ambos caminos en un mismo historial.",
+      gitTranslation: [`git merge ${candidateBranch}`],
+      accent: "from-emerald-400/80 to-cyan-300/80",
+      previewChanges: [...examplesByAction.merge],
+      targetBranch: candidateBranch,
+    };
+  }
+
+  if (
+    containsAny(normalized, [
+      "rebase",
+      "rebasa",
+      "reorganiza la rama",
+      "reordena commits",
+      "pon esto encima",
+    ])
+  ) {
+    const ontoBranch =
+      repository.branchName === "main"
+        ? repository.branches.find((branch) => branch.name !== "main")?.name ?? "main"
+        : "main";
+    return {
+      type: "rebase",
+      label: "Reordenar con rebase",
+      naturalExplanation:
+        "Voy a reubicar tu rama sobre una base más reciente para que la historia quede más lineal.",
+      gitTranslation: [`git rebase ${ontoBranch}`],
+      accent: "from-violet-400/80 to-fuchsia-300/80",
+      previewChanges: [...examplesByAction.rebase],
+      targetBranch: ontoBranch,
+    };
+  }
+
+  return null;
 }
 
 export function simulateAction(repository: RepositoryState, action: GitAction) {
@@ -471,6 +522,62 @@ export function simulateAction(repository: RepositoryState, action: GitAction) {
       nextState,
       summary: `Se abrirá ${branchName} como una historia paralela conectada a ${sourceHead.label}.`,
       backupLabel: sourceHead.label,
+    };
+  }
+
+  if (action.type === "merge") {
+    const sourceBranch =
+      nextState.branches.find((branch) => branch.name !== nextState.branchName) ?? nextState.branches[0];
+    const sourceHead =
+      nextState.commits.find((point) => point.id === sourceBranch?.headId) ?? nextState.commits.at(-1);
+    const mergePoint = createPoint(
+      `${currentHead?.id ?? "head"}-merge-${sourceHead?.id ?? "source"}`,
+      `Merge con ${sourceBranch?.name ?? "otra rama"}`,
+      `Se unen ${nextState.branchName} y ${sourceBranch?.name ?? "otra rama"}`,
+      "merge",
+      nextState.branchName,
+      new Date().toISOString(),
+      currentHead?.id,
+      sourceHead?.id,
+    );
+
+    nextState.commits.push(mergePoint);
+    nextState.headId = mergePoint.id;
+    updateBranchHead(nextState, nextState.branchName, mergePoint.id);
+    nextState.remoteStatus = `Merge preparado con ${sourceBranch?.name ?? "otra rama"}`;
+    nextState.lastAction = "merge";
+
+    return {
+      nextState,
+      summary: `La línea ${nextState.branchName} absorberá ${sourceBranch?.name ?? "otra rama"} en un nuevo punto de unión.`,
+      backupLabel: currentHead?.label ?? "punto actual",
+    };
+  }
+
+  if (action.type === "rebase") {
+    const baseBranch =
+      nextState.branches.find((branch) => branch.name !== nextState.branchName) ?? nextState.branches[0];
+    const rebasedPoint = createPoint(
+      `${currentHead?.id ?? "head"}-rebase`,
+      `Rebase sobre ${baseBranch?.name ?? nextState.branchName}`,
+      `La línea ${nextState.branchName} se recoloca sobre ${baseBranch?.name ?? "la nueva base"}`,
+      "rebase",
+      nextState.branchName,
+      new Date().toISOString(),
+      currentHead?.id,
+      baseBranch?.headId,
+    );
+
+    nextState.commits.push(rebasedPoint);
+    nextState.headId = rebasedPoint.id;
+    updateBranchHead(nextState, nextState.branchName, rebasedPoint.id);
+    nextState.remoteStatus = `Rebase preparado sobre ${baseBranch?.name ?? "la rama base"}`;
+    nextState.lastAction = "rebase";
+
+    return {
+      nextState,
+      summary: `La historia de ${nextState.branchName} se reorganizará sobre ${baseBranch?.name ?? "la base actual"}.`,
+      backupLabel: currentHead?.label ?? "punto actual",
     };
   }
 
@@ -589,6 +696,20 @@ export function createSyncStatusMessage(repository: RepositoryState): ChatMessag
       `${remoteText} Ahora puedo leer el historial, detectar cambios sin guardar y ejecutar acciones reales de Git con tu confirmación.`,
     timestamp: new Date().toISOString(),
     kind: "normal",
+  };
+}
+
+export function createUnknownIntentMessage(input?: string): ChatMessage {
+  const suffix = input ? ` Mensaje recibido: "${input}".` : "";
+  return {
+    id: crypto.randomUUID(),
+    role: "assistant",
+    content:
+      "No he identificado una acción de Git válida en ese mensaje, así que no puedo realizarla. " +
+      "Prueba con algo como guardar, subir, volver, crear una rama, fusionar o hacer rebase." +
+      suffix,
+    timestamp: new Date().toISOString(),
+    kind: "fallback",
   };
 }
 

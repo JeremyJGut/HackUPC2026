@@ -1,6 +1,6 @@
-export type TimelinePointType = "commit" | "push" | "restore" | "branch";
+export type TimelinePointType = "commit" | "push" | "restore" | "branch" | "merge" | "rebase";
 
-export type GitActionType = "commit" | "push" | "restore" | "branch";
+export type GitActionType = "commit" | "push" | "restore" | "branch" | "merge" | "rebase";
 
 export type BranchTrack = {
   name: string;
@@ -49,6 +49,7 @@ export type GitAction = {
   gitTranslation: string[];
   accent: string;
   previewChanges: string[];
+  targetBranch?: string;
 };
 
 export type PendingAction = {

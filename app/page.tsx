@@ -12,6 +12,7 @@ import {
   createAssistantResult,
   createInitialRepository,
   createInitialMessages,
+  createUnknownIntentMessage,
   getActionFromInput,
   simulateAction,
 } from "@/lib/git-simulator";
@@ -52,6 +53,8 @@ type SpeechRecognitionEventLike = {
 
 const suggestionPhrases = [
   "Guarda lo que he hecho ahora",
+  "Haz merge de la rama actual",
+  "Haz rebase sobre main",
   "Crea una rama paralela para experimentar",
   "Súbelo a internet",
   "Quiero volver a lo de ayer",
@@ -100,7 +103,7 @@ export default function Home() {
       },
       {
         label: "Estado de nube",
-        value: repository.lastAction === "push" ? "Sincronizado" : "Local",
+        value: repository.remoteStatus || (repository.lastAction === "push" ? "Sincronizado" : "Local"),
         icon: CloudUpload,
       },
     ],
@@ -247,6 +250,13 @@ export default function Home() {
     };
 
     const action = getActionFromInput(trimmed, repository);
+
+    if (!action) {
+      setMessages((current) => [...current, userMessage, createUnknownIntentMessage(trimmed)]);
+      setInput("");
+      return;
+    }
+
     const simulation = simulateAction(repository, action);
 
     setMessages((current) => [...current, userMessage, createAssistantConfirmation(action)]);
@@ -284,6 +294,20 @@ export default function Home() {
           method: "POST",
           body: JSON.stringify({ mode: "soft" }),
         });
+      } else if (pendingAction.action.type === "merge") {
+        response = await apiFetch<GitOperationResponse>("/api/merge", {
+          method: "POST",
+          body: JSON.stringify({
+            sourceBranch: pendingAction.action.targetBranch ?? pendingAction.action.gitTranslation[0]?.split(" ").at(-1),
+          }),
+        });
+      } else if (pendingAction.action.type === "rebase") {
+        response = await apiFetch<GitOperationResponse>("/api/rebase", {
+          method: "POST",
+          body: JSON.stringify({
+            onto: pendingAction.action.targetBranch ?? pendingAction.action.gitTranslation[0]?.split(" ").at(-1),
+          }),
+        });
       } else {
         const branchName = pendingAction.action.gitTranslation[0]?.split(" ").at(-1) ?? "idea-gitease";
         response = await apiFetch<GitOperationResponse>("/api/branch", {
@@ -292,7 +316,7 @@ export default function Home() {
         });
       }
 
-        setRepository(response.repository);
+      setRepository(response.repository);
       setMessages((current) => [...current, createAssistantResult(pendingAction.action, response.message)]);
       setPendingAction(null);
       await loadRepository(true);
@@ -421,9 +445,9 @@ export default function Home() {
           </div>
         </motion.header>
 
-        <section className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_clamp(300px,28vw,390px)]">
+        <section className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_clamp(280px,24vw,380px)] lg:items-stretch">
           <motion.section
-            className="min-h-[640px] lg:min-h-0 lg:h-full"
+            className="min-h-[640px] lg:min-h-0 lg:h-full lg:w-full"
             initial={{ opacity: 0, x: -18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.05 }}
@@ -436,7 +460,7 @@ export default function Home() {
           </motion.section>
 
           <motion.aside
-            className="min-h-[640px] rounded-[32px] border border-white/10 bg-white/6 p-5 shadow-xl shadow-slate-950/20 backdrop-blur-xl lg:min-h-0 lg:h-full lg:overflow-hidden"
+            className="min-h-[640px] rounded-[32px] border border-white/10 bg-white/6 p-5 shadow-xl shadow-slate-950/20 backdrop-blur-xl lg:justify-self-end lg:min-h-0 lg:h-full lg:w-full lg:max-w-[380px] lg:overflow-hidden"
             initial={{ opacity: 0, x: 18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.15 }}

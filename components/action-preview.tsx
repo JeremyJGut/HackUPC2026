@@ -1,7 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, CloudUpload, GitBranch, GitCommitHorizontal, RotateCcw } from "lucide-react";
+import {
+  ArrowRight,
+  CloudUpload,
+  GitBranch,
+  GitCommitHorizontal,
+  GitMerge,
+  RotateCcw,
+  Workflow,
+} from "lucide-react";
 
 import type { GitAction, RepositoryState } from "@/lib/types";
 
@@ -10,6 +18,8 @@ const iconByType = {
   push: CloudUpload,
   restore: RotateCcw,
   branch: GitBranch,
+  merge: GitMerge,
+  rebase: Workflow,
 } as const;
 
 type ActionPreviewProps = {
