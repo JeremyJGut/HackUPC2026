@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRightLeft,
@@ -59,6 +59,42 @@ function withAlpha(hex: string, alpha: string) {
   return `${hex}${alpha}`;
 }
 
+function useElementSize<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) {
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) {
+        return;
+      }
+
+      setSize({
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      });
+    });
+
+    observer.observe(element);
+    setSize({
+      width: element.clientWidth,
+      height: element.clientHeight,
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  return { ref, size };
+}
+
 function buildGraph(repository: RepositoryState, compact: boolean) {
   const points = compact
     ? repository.commits.slice(Math.max(repository.commits.length - 6, 0))
@@ -69,17 +105,25 @@ function buildGraph(repository: RepositoryState, compact: boolean) {
   const filteredIds = new Set(points.map((point) => point.id));
   const xGap = compact ? 138 : 182;
   const yGap = compact ? 78 : 112;
-  const paddingX = compact ? 86 : 128;
-  const paddingY = compact ? 88 : 132;
+  const paddingX = compact ? 96 : 148;
+  const paddingTop = compact ? 88 : 142;
+  const paddingBottom = compact ? 132 : 210;
+  const cardWidth = compact ? 148 : 176;
+  const cardHeight = compact ? 88 : 128;
+  const badgeWidth = 82;
+  const badgeHeight = 30;
   const width = Math.max(paddingX * 2 + Math.max(points.length - 1, 0) * xGap, compact ? 560 : 1080);
-  const height = Math.max(paddingY * 2 + Math.max(branchOrder.length - 1, 0) * yGap, compact ? 280 : 520);
+  const height = Math.max(
+    paddingTop + paddingBottom + Math.max(branchOrder.length - 1, 0) * yGap + cardHeight,
+    compact ? 300 : 560,
+  );
 
   const positioned: PositionedPoint[] = points.map((point, index) => {
     const branchIndex = branchIndexMap.get(point.branch) ?? 0;
     return {
       point,
       x: paddingX + index * xGap,
-      y: paddingY + branchIndex * yGap,
+      y: paddingTop + branchIndex * yGap,
       color: branchColorMap.get(point.branch) ?? "#34d399",
       branchIndex,
       isHead: repository.headId === point.id,
@@ -131,6 +175,10 @@ function buildGraph(repository: RepositoryState, compact: boolean) {
     jumpEdges,
     width,
     height,
+    cardWidth,
+    cardHeight,
+    badgeWidth,
+    badgeHeight,
     branchOrder,
     branchColorMap,
   };
@@ -144,12 +192,24 @@ export function GitTreeVisualizer({
   onCheckoutSelect,
 }: GitTreeVisualizerProps) {
   const current = pending ?? repository;
-  const [zoom, setZoom] = useState(1);
+  const [zoomFactor, setZoomFactor] = useState(1);
   const graph = useMemo(() => buildGraph(current, compact), [current, compact]);
+  const { ref: viewportRef, size: viewportSize } = useElementSize<HTMLDivElement>();
 
   const setSafeZoom = (delta: number) => {
-    setZoom((currentZoom) => Math.min(1.8, Math.max(0.72, Number((currentZoom + delta).toFixed(2)))));
+    setZoomFactor((currentZoom) => Math.min(1.8, Math.max(0.72, Number((currentZoom + delta).toFixed(2)))));
   };
+
+  const fitScale = compact
+    ? 1
+    : Math.min(
+        1,
+        viewportSize.width > 0 ? viewportSize.width / graph.width : 1,
+        viewportSize.height > 0 ? viewportSize.height / graph.height : 1,
+      );
+  const appliedScale = compact ? 1 : fitScale * zoomFactor;
+  const scaledWidth = graph.width * appliedScale;
+  const scaledHeight = graph.height * appliedScale;
 
   return (
     <div className="flex h-full min-h-0 flex-col rounded-[28px] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
@@ -202,7 +262,7 @@ export function GitTreeVisualizer({
                   <Minus className="h-4 w-4" />
                 </button>
                 <span className="min-w-[54px] text-center text-xs text-white/60">
-                  {Math.round(zoom * 100)}%
+                  {Math.round(appliedScale * 100)}%
                 </span>
                 <button
                   type="button"
@@ -234,13 +294,18 @@ export function GitTreeVisualizer({
             ) : null}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-auto rounded-[18px] border border-white/8 bg-black/20">
+          <div
+            ref={viewportRef}
+            className="min-h-[280px] flex-1 overflow-auto rounded-[18px] border border-white/8 bg-black/20"
+          >
             <div
               className="origin-top-left"
               style={{
-                width: graph.width,
-                height: graph.height,
-                transform: compact ? "scale(1)" : `scale(${zoom})`,
+                width: scaledWidth,
+                height: scaledHeight,
+                minWidth: compact ? scaledWidth : "100%",
+                minHeight: compact ? scaledHeight : "100%",
+                transform: `scale(${appliedScale})`,
                 transformOrigin: "top left",
               }}
             >
@@ -327,15 +392,15 @@ export function GitTreeVisualizer({
                       </foreignObject>
 
                       <foreignObject
-                        x={x - 68}
+                        x={x - graph.cardWidth / 2}
                         y={y + 22}
-                        width={136}
-                        height={compact ? 72 : 92}
+                        width={graph.cardWidth}
+                        height={graph.cardHeight}
                       >
                         <motion.div
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className={`rounded-2xl border border-white/10 bg-slate-950/78 p-3 text-center shadow-[0_14px_40px_rgba(0,0,0,0.28)] backdrop-blur-sm transition ${
+                          className={`h-full rounded-2xl border border-white/10 bg-slate-950/78 p-3 text-center shadow-[0_14px_40px_rgba(0,0,0,0.28)] backdrop-blur-sm transition ${
                             isClickable && !compact ? "hover:border-white/20 hover:bg-slate-900/88" : ""
                           }`}
                         >
@@ -360,7 +425,12 @@ export function GitTreeVisualizer({
                       </foreignObject>
 
                       {isHead ? (
-                        <foreignObject x={x + 20} y={y - 16} width={70} height={28}>
+                        <foreignObject
+                          x={x + 20}
+                          y={y - 16}
+                          width={graph.badgeWidth}
+                          height={graph.badgeHeight}
+                        >
                           <div className="inline-flex items-center gap-1 rounded-full border border-violet-300/20 bg-violet-400/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-violet-100">
                             <Sparkles className="h-3 w-3" />
                             HEAD

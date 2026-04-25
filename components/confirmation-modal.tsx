@@ -33,13 +33,13 @@ export function ConfirmationModal({ pending, onClose, onConfirm }: ConfirmationM
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/72 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/72 p-3 backdrop-blur-sm sm:p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
       <motion.div
-        className="w-full max-w-[1500px] rounded-[2rem] border border-white/10 bg-slate-950/95 p-6 shadow-2xl shadow-cyan-500/10"
+        className="flex max-h-[92dvh] w-full max-w-[1500px] flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/95 p-4 shadow-2xl shadow-cyan-500/10 sm:p-6"
         initial={{ y: 18, opacity: 0, scale: 0.985 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 10, opacity: 0, scale: 0.985 }}
@@ -59,8 +59,9 @@ export function ConfirmationModal({ pending, onClose, onConfirm }: ConfirmationM
           </div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="space-y-4">
+        <div className="min-h-0 flex-1 overflow-auto pr-1">
+          <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
+            <div className="space-y-4">
             {details.map((detail) => (
               <div
                 key={detail.title}
@@ -70,28 +71,33 @@ export function ConfirmationModal({ pending, onClose, onConfirm }: ConfirmationM
                 <p className="mt-3 text-sm leading-6 text-slate-100">{detail.value}</p>
               </div>
             ))}
-          </div>
+            </div>
 
-          <div className="grid gap-4">
-            <div className="grid gap-4 xl:grid-cols-[1fr_auto_1fr]">
-              <div className="rounded-[1.75rem] border border-white/10 bg-black/20 p-4">
-                <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-200">
-                  <Sparkles className="h-4 w-4 text-slate-400" />
-                  Antes
+            <div className="grid min-h-0 gap-4">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                <div className="rounded-[1.75rem] border border-white/10 bg-black/20 p-4">
+                  <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-200">
+                    <Sparkles className="h-4 w-4 text-slate-400" />
+                    Antes
+                  </div>
+                  <div className="min-h-[280px]">
+                    <GitTreeVisualizer repository={pending.before} compact />
+                  </div>
                 </div>
-                <GitTreeVisualizer repository={pending.before} compact />
-              </div>
 
-              <div className="flex items-center justify-center text-white/35">
-                <ArrowRight className="h-8 w-8" />
-              </div>
-
-              <div className="rounded-[1.75rem] border border-cyan-400/20 bg-cyan-400/5 p-4">
-                <div className="mb-4 flex items-center gap-2 text-sm font-medium text-cyan-100">
-                  <Sparkles className="h-4 w-4 text-cyan-300" />
-                  Despues
+                <div className="flex items-center justify-center text-white/35">
+                  <ArrowRight className="h-8 w-8" />
                 </div>
-                <GitTreeVisualizer repository={pending.after} compact />
+
+                <div className="rounded-[1.75rem] border border-cyan-400/20 bg-cyan-400/5 p-4">
+                  <div className="mb-4 flex items-center gap-2 text-sm font-medium text-cyan-100">
+                    <Sparkles className="h-4 w-4 text-cyan-300" />
+                    Despues
+                  </div>
+                  <div className="min-h-[280px]">
+                    <GitTreeVisualizer repository={pending.after} compact />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -259,9 +259,9 @@ export default function Home() {
           </div>
         </motion.header>
 
-        <section className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_clamp(320px,28vw,400px)]">
+        <section className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_clamp(300px,28vw,390px)]">
           <motion.section
-            className="min-h-[720px] lg:min-h-0 lg:h-full"
+            className="min-h-[640px] lg:min-h-0 lg:h-full"
             initial={{ opacity: 0, x: -18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.05 }}
