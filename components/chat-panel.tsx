@@ -12,7 +12,6 @@ type ChatPanelProps = {
   onInputChange: (value: string) => void;
   onSubmit: () => void;
   onMicClick: () => void;
-  suggestions: string[];
 };
 
 export function ChatPanel({
@@ -22,7 +21,6 @@ export function ChatPanel({
   onInputChange,
   onSubmit,
   onMicClick,
-  suggestions,
 }: ChatPanelProps) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -101,20 +99,7 @@ export function ChatPanel({
         ))}
       </div>
 
-      <div className="mt-6 space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => onInputChange(suggestion)}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
-
+      <div className="mt-6">
         <div className="flex items-center gap-3 rounded-[28px] border border-white/10 bg-slate-950/70 p-2">
           <button
             type="button"
