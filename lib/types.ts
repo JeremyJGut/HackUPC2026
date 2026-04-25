@@ -92,5 +92,6 @@ export type ChatMessage = {
   role: "assistant" | "user";
   content: string;
   timestamp: string;
+  subject?: string;
   kind?: "normal" | "confirmation" | "result" | "transcript" | "fallback";
 };

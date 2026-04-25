@@ -155,8 +155,9 @@ export function createInitialMessages(): ChatMessage[] {
     {
       id: crypto.randomUUID(),
       role: "assistant",
+      subject: 'Gitly "Bienvenida"',
       content:
-        "Hola, soy GitEase. Puedes decir cosas como “Guarda lo que he hecho ahora”, “Súbelo a internet” o “Quiero volver a lo de ayer”.",
+        "Hola, soy Gitly. Puedes decir cosas como “Guarda lo que he hecho ahora”, “Súbelo a internet” o “Quiero volver a lo de ayer”.",
       timestamp: new Date().toISOString(),
       kind: "normal",
     },
@@ -667,6 +668,7 @@ export function createAssistantConfirmation(action: GitAction): ChatMessage {
   return {
     id: crypto.randomUUID(),
     role: "assistant",
+    subject: `Gitly "${action.label}"`,
     content:
       `Entendido. ${action.naturalExplanation} Para hacer esto, voy a crear una "Copia de Seguridad". ` +
       "Esto guardará tu trabajo actual en el punto A para que nunca lo pierdas. ¿Confirmas?",
@@ -679,6 +681,7 @@ export function createAssistantResult(action: GitAction, summary: string): ChatM
   return {
     id: crypto.randomUUID(),
     role: "assistant",
+    subject: `Gitly "${action.label}"`,
     content: `${action.label} preparado. ${summary}`,
     timestamp: new Date().toISOString(),
     kind: "result",
@@ -707,6 +710,7 @@ export function createAssistantCheckoutMessage(point: SavePoint): ChatMessage {
   return {
     id: crypto.randomUUID(),
     role: "assistant",
+    subject: 'Gitly "Exploración"',
     content: `He resaltado ${point.label} como referencia visual. La línea temporal principal no cambia; solo estás explorando ese punto de la historia.`,
     timestamp: new Date().toISOString(),
     kind: "normal",
@@ -722,8 +726,9 @@ export function createSyncStatusMessage(repository: RepositoryState): ChatMessag
   return {
     id: crypto.randomUUID(),
     role: "assistant",
+    subject: 'Gitly "Sincronización"',
     content:
-      `He conectado GitEase con el repositorio real **${repoName}** en la rama **${repository.branchName}**. ` +
+      `He conectado Gitly con el repositorio real **${repoName}** en la rama **${repository.branchName}**. ` +
       `${remoteText} Ahora puedo leer el historial, detectar cambios sin guardar y ejecutar acciones reales de Git con tu confirmación.`,
     timestamp: new Date().toISOString(),
     kind: "normal",
@@ -735,6 +740,7 @@ export function createUnknownIntentMessage(input?: string): ChatMessage {
   return {
     id: crypto.randomUUID(),
     role: "assistant",
+    subject: 'Gitly "Acción no identificada"',
     content:
       "No he identificado una acción de Git válida en ese mensaje, así que no puedo realizarla. " +
       "Prueba con algo como guardar, subir, volver, crear una rama, fusionar o hacer rebase." +

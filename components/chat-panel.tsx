@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Mic, Send, Volume2 } from "lucide-react";
+import { AlertTriangle, Mic, Send, Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { ChatMessage } from "@/lib/types";
 
@@ -25,6 +25,22 @@ export function ChatPanel({
   suggestions,
 }: ChatPanelProps) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const buildSubject = (message: ChatMessage) => {
+    if (message.role === "user") {
+      return "Tú";
+    }
+
+    if (message.subject) {
+      return `Gitly · ${message.subject}`;
+    }
+
+    if (message.kind === "fallback") {
+      return "Gitly · Error";
+    }
+
+    return "Gitly";
+  };
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -66,13 +82,20 @@ export function ChatPanel({
             animate={{ opacity: 1, y: 0 }}
             className={`max-w-[92%] rounded-3xl px-4 py-3 ${
               message.role === "assistant"
-                ? "bg-white/7 text-slate-100"
+                ? message.kind === "fallback"
+                  ? "border border-rose-400/30 bg-rose-400/10 text-rose-50"
+                  : "bg-white/7 text-slate-100"
                 : "ml-auto bg-cyan-400 text-slate-950"
             }`}
           >
-            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-inherit/70">
-              {message.role === "assistant" ? "GitEase" : "Tú"}
-            </p>
+            <div className="mb-2 flex items-center gap-2">
+              {message.role === "assistant" && message.kind === "fallback" ? (
+                <AlertTriangle className="h-3.5 w-3.5 text-rose-200" />
+              ) : null}
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-inherit/70">
+                {buildSubject(message)}
+              </p>
+            </div>
             <p className="text-sm leading-6">{message.content}</p>
           </motion.div>
         ))}

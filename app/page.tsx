@@ -110,7 +110,12 @@ export default function Home() {
     [repository],
   );
 
-  const addAssistantMessage = useCallback((content: string, kind: ChatMessage["kind"] = "normal") => {
+  const addAssistantMessage = useCallback(
+    (
+      content: string,
+      kind: ChatMessage["kind"] = "normal",
+      subject = kind === "fallback" ? 'Gitly "Error"' : 'Gitly "Estado"',
+    ) => {
     setMessages((current) => [
       ...current,
       {
@@ -118,10 +123,13 @@ export default function Home() {
         role: "assistant",
         content,
         timestamp: new Date().toISOString(),
+        subject,
         kind,
       },
     ]);
-  }, []);
+    },
+    [],
+  );
 
   const loadRepository = useCallback(
     async (quiet = false) => {
@@ -146,6 +154,7 @@ export default function Home() {
                 `Tienes ${data.repository.commits.length} puntos visibles en la historia y ` +
                 `${data.repository.changedFiles?.length ?? 0} archivo(s) con cambios.`,
               timestamp: new Date().toISOString(),
+              subject: 'Gitly "Sincronización"',
               kind: "normal",
             },
           ]);
@@ -200,6 +209,7 @@ export default function Home() {
           role: "assistant",
           content: `Te escuché decir: "${transcript}". Puedes enviarlo o editarlo antes de confirmar.`,
           timestamp: new Date().toISOString(),
+          subject: 'Gitly "Voz detectada"',
           kind: "transcript",
         },
       ]);
@@ -253,6 +263,24 @@ export default function Home() {
 
     if (!action) {
       setMessages((current) => [...current, userMessage, createUnknownIntentMessage(trimmed)]);
+      setInput("");
+      return;
+    }
+
+    if (action.type === "commit" && repository.changedFiles?.length === 0 && repository.stagedChanges === 0) {
+      setMessages((current) => [
+        ...current,
+        userMessage,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content:
+            "No hay cambios para guardar ahora mismo. Guarda primero algún archivo en tu editor y luego vuelve a pedírmelo.",
+          timestamp: new Date().toISOString(),
+          subject: 'Gitly "Error de guardado"',
+          kind: "fallback",
+        },
+      ]);
       setInput("");
       return;
     }
@@ -347,6 +375,7 @@ export default function Home() {
         role: "assistant",
         content: `He movido el HEAD hacia ${targetPoint.label}. Es una simulación visual de checkout para que veas cómo cambiaría tu historia.`,
         timestamp: new Date().toISOString(),
+        subject: 'Gitly "Checkout visual"',
         kind: "result",
       },
     ]);
@@ -380,6 +409,7 @@ export default function Home() {
           role: "assistant",
           content: `Modo demo: he simulado la voz con "${fallbackTranscript}".`,
           timestamp: new Date().toISOString(),
+          subject: 'Gitly "Voz demo"',
           kind: "transcript",
         },
       ]);
@@ -411,7 +441,7 @@ export default function Home() {
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200">
                 <Sparkles className="h-3.5 w-3.5" />
-                GitEase MVP
+                Gitly
               </span>
               <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${statusBadge.className}`}>
                 {statusBadge.icon}
@@ -420,11 +450,10 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
-                Git explicado como si fuera una historia.
+                Gitly
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
-                Traduce voz o lenguaje natural a acciones seguras, muestra una copia de seguridad antes de
-                ejecutar y visualiza la evolucion del proyecto con puntos de guardado intuitivos.
+                Historial de versiones de tu proyecto
               </p>
             </div>
           </div>
@@ -445,7 +474,7 @@ export default function Home() {
           </div>
         </motion.header>
 
-        <section className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_clamp(280px,24vw,380px)] lg:items-stretch">
+        <section className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-stretch">
           <motion.section
             className="min-h-[640px] lg:min-h-0 lg:h-full lg:w-full"
             initial={{ opacity: 0, x: -18 }}
@@ -460,7 +489,7 @@ export default function Home() {
           </motion.section>
 
           <motion.aside
-            className="min-h-[640px] rounded-[32px] border border-white/10 bg-white/6 p-5 shadow-xl shadow-slate-950/20 backdrop-blur-xl lg:justify-self-end lg:min-h-0 lg:h-full lg:w-full lg:max-w-[380px] lg:overflow-hidden"
+            className="min-h-[640px] rounded-[32px] border border-white/10 bg-white/6 p-5 shadow-xl shadow-slate-950/20 backdrop-blur-xl lg:justify-self-end lg:min-h-0 lg:h-full lg:w-full lg:max-w-[360px] lg:overflow-hidden"
             initial={{ opacity: 0, x: 18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.15 }}

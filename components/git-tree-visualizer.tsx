@@ -24,6 +24,7 @@ type GitTreeVisualizerProps = {
   title?: string;
   compact?: boolean;
   onCheckoutSelect?: (pointId: string) => void;
+  focusPointId?: string;
 };
 
 type PositionedPoint = {
@@ -196,6 +197,7 @@ export function GitTreeVisualizer({
   title = "Mapa de Historia",
   compact = false,
   onCheckoutSelect,
+  focusPointId,
 }: GitTreeVisualizerProps) {
   const current = pending ?? repository;
   const [zoomFactor, setZoomFactor] = useState(1);
@@ -231,24 +233,24 @@ export function GitTreeVisualizer({
             {current.branches.map((branch) => {
               const isMainBranch = branch.name === "main";
               return (
-              <span
-                key={branch.name}
-                className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.2em]"
-                style={{
-                  borderColor: isMainBranch ? withAlpha("#f8fafc", "5c") : withAlpha(branch.color, "33"),
-                  backgroundColor: isMainBranch ? "rgba(248,250,252,0.12)" : withAlpha(branch.color, "18"),
-                  color: isMainBranch ? "#f8fafc" : branch.color,
-                  boxShadow: isMainBranch ? "0 0 0 1px rgba(255,255,255,0.12) inset" : undefined,
-                }}
-              >
                 <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: isMainBranch ? "#f8fafc" : branch.color }}
-                />
-                {branch.name}
-                {isMainBranch ? <span className="text-[9px] text-slate-300">ORIGINAL</span> : null}
-              </span>
-            );
+                  key={branch.name}
+                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.2em]"
+                  style={{
+                    borderColor: isMainBranch ? withAlpha("#f8fafc", "5c") : withAlpha(branch.color, "33"),
+                    backgroundColor: isMainBranch ? "rgba(248,250,252,0.12)" : withAlpha(branch.color, "18"),
+                    color: isMainBranch ? "#f8fafc" : branch.color,
+                    boxShadow: isMainBranch ? "0 0 0 1px rgba(255,255,255,0.12) inset" : undefined,
+                  }}
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: isMainBranch ? "#f8fafc" : branch.color }}
+                  />
+                  {branch.name}
+                  {isMainBranch ? <span className="text-[9px] text-slate-300">ORIGINAL</span> : null}
+                </span>
+              );
             })}
           </div>
 
@@ -369,6 +371,7 @@ export function GitTreeVisualizer({
 
                 {graph.points.map(({ point, x, y, color, isHead, isClickable }) => {
                   const Icon = iconMap[point.type];
+                  const isFocused = focusPointId === point.id;
                   return (
                     <g
                       key={point.id}
@@ -382,10 +385,10 @@ export function GitTreeVisualizer({
                       <circle
                         cx={x}
                         cy={y}
-                        r={isHead ? 18 : 14}
-                        fill={withAlpha(color, isHead ? "2f" : "24")}
+                        r={isHead || isFocused ? 18 : 14}
+                        fill={withAlpha(color, isHead || isFocused ? "2f" : "24")}
                         stroke={withAlpha(color, "f0")}
-                        strokeWidth={isHead ? 3 : 2}
+                        strokeWidth={isHead || isFocused ? 3 : 2}
                       />
                       <foreignObject x={x - 10} y={y - 10} width={20} height={20}>
                         <div className="flex h-full w-full items-center justify-center text-white">
@@ -402,7 +405,11 @@ export function GitTreeVisualizer({
                         <motion.div
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className={`h-full rounded-2xl border border-white/10 bg-slate-950/78 p-3 text-center shadow-[0_14px_40px_rgba(0,0,0,0.28)] backdrop-blur-sm transition ${
+                          className={`h-full rounded-2xl border p-3 text-center shadow-[0_14px_40px_rgba(0,0,0,0.28)] backdrop-blur-sm transition ${
+                            isFocused
+                              ? "border-cyan-300/40 bg-cyan-400/10"
+                              : "border-white/10 bg-slate-950/78"
+                          } ${
                             isClickable && !compact ? "hover:border-white/20 hover:bg-slate-900/88" : ""
                           }`}
                         >
