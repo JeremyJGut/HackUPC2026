@@ -1,4 +1,4 @@
-# HACKUPC 2026
+# HACKUPC 2026 DEMO
 GitGuide ha sido desarrollado en el marco de la hackathon HackUPC 2026, celebrada entre el 24 y el 26 de abril, con una duración total de 36 horas, las cuales no se han dedicado completamente al desarrollo.
 Debido a las limitaciones de tiempo propias de este tipo de eventos, el proyecto se presenta como un prototipo funcional (MVP). Esto implica que:
 * Algunas funcionalidades no están completamente desarrolladas
